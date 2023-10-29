@@ -1,0 +1,96 @@
+class CNNModel(nn.Module):
+    def __init__(self, input_shape, decay):
+        super(CNNModel, self).__init__()
+
+        # Define the layers for input1
+        self.input1_conv1 = nn.Conv2d(in_channels=input_shape[0], out_channels=16, kernel_size=(3, 3), padding=0)
+        self.input1_bn1 = nn.BatchNorm2d(16)
+        self.input1_conv2 = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(8, 1), padding=0)
+        self.input1_bn2 = nn.BatchNorm2d(16)
+        self.input1_conv3 = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(1, 20), padding=0)
+        self.input1_bn3 = nn.BatchNorm2d(16)
+        self.input1_dense1 = nn.Linear(16, 2)
+        self.input1_dense2 = nn.Linear(2, 16)
+
+        # Define the layers for input2
+        self.input2_conv1 = nn.Conv2d(in_channels=input_shape[0], out_channels=16, kernel_size=(3, 3), padding=0)
+        self.input2_bn1 = nn.BatchNorm2d(16)
+        self.input2_conv2 = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(8, 1), padding=0)
+        self.input2_bn2 = nn.BatchNorm2d(16)
+        self.input2_conv3 = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(1, 20), padding=0)
+        self.input2_bn3 = nn.BatchNorm2d(16)
+        self.input2_dense1 = nn.Linear(16, 2)
+        self.input2_dense2 = nn.Linear(2, 16)
+
+        # Define the layers for input3
+        self.input3_conv1 = nn.Conv2d(in_channels=input_shape[0], out_channels=16, kernel_size=(3, 3), padding=0)
+        self.input3_bn1 = nn.BatchNorm2d(16)
+        self.input3_conv2 = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(8, 1), padding=0)
+        self.input3_bn2 = nn.BatchNorm2d(16)
+        self.input3_conv3 = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(1, 20), padding=0)
+        self.input3_bn3 = nn.BatchNorm2d(16)
+        self.input3_dense1 = nn.Linear(16, 2)
+        self.input3_dense2 = nn.Linear(2, 16)
+
+        # Define the shared layers
+        self.shared_dense1 = nn.Linear(72, 72)
+        self.shared_dense2 = nn.Linear(72, 72)
+        self.shared_dense3 = nn.Linear(72, 72)
+
+        # Define the final output layer
+        self.final_dense = nn.Linear(36, 12)
+
+    def forward(self, input1, input2, input3):
+        # Input1
+        input1_x = F.relu(self.input1_bn1(self.input1_conv1(input1)))
+        input1_x = F.dropout(input1_x, p=0.25, training=self.training)
+        input1_x = F.relu(self.input1_bn2(self.input1_conv2(input1_x)))
+        input1_x = F.dropout(input1_x, p=0.25, training=self.training)
+        input1_x = F.relu(self.input1_bn3(self.input1_conv3(input1_x)))
+        input1_x = F.dropout(input1_x, p=0.25, training=self.training)
+        input1_x_2 = input1_x.mean(dim=(2, 3))
+        input1_x_2 = F.relu(self.input1_dense1(input1_x_2))
+        input1_x_2 = torch.sigmoid(self.input1_dense2(input1_x_2))
+        input1_x = input1_x * input1_x_2
+
+        # Input2
+        input2_x = F.relu(self.input2_bn1(self.input2_conv1(input2)))
+        input2_x = F.dropout(input2_x, p=0.25, training=self.training)
+        input2_x = F.relu(self.input2_bn2(self.input2_conv2(input2_x)))
+        input2_x = F.dropout(input2_x, p=0.25, training=self.training)
+        input2_x = F.relu(self.input2_bn3(self.input2_conv3(input2_x)))
+        input2_x = F.dropout(input2_x, p=0.25, training=self.training)
+        input2_x_2 = input2_x.mean(dim=(2, 3))
+        input2_x_2 = F.relu(self.input2_dense1(input2_x_2))
+        input2_x_2 = torch.sigmoid(self.input2_dense2(input2_x_2))
+        input2_x = input2_x * input2_x_2
+
+        # Input3
+        input3_x = F.relu(self.input3_bn1(self.input3_conv1(input3)))
+        input3_x = F.dropout(input3_x, p=0.25, training=self.training)
+        input3_x = F.relu(self.input3_bn2(self.input3_conv2(input3_x)))
+        input3_x = F.dropout(input3_x, p=0.25, training=self.training)
+        input3_x = F.relu(self.input3_bn3(self.input3_conv3(input3_x)))
+        input3_x = F.dropout(input3_x, p=0.25, training=self.training)
+        input3_x_2 = input3_x.mean(dim=(2, 3))
+        input3_x_2 = F.relu(self.input3_dense1(input3_x_2))
+        input3_x_2 = torch.sigmoid(self.input3_dense2(input3_x_2))
+        input3_x = input3_x * input3_x_2
+
+        # Flatten and add the inputs
+        input1_x = input1_x.view(input1_x.size(0), -1)
+        input2_x = input2_x.view(input2_x.size(0), -1)
+        input3_x = input3_x.view(input3_x.size(0), -1)
+        input1_x = input1_x + input2_x
+        input2_x = input2_x + input3_x
+        input3_x = input3_x + input1_x
+
+        # Shared dense layers
+        input1_x = F.relu(self.shared_dense1(input1_x))
+        input2_x = F.relu(self.shared_dense2(input2_x))
+        input3_x = F.relu(self.shared_dense3(input3_x))
+
+        # Concatenate and pass through the final output layer
+        x = torch.cat((input1_x, input2_x, input3_x), dim=1)
+        x = self.final_dense(x)
+        return x
