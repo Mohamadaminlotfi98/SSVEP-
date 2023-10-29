@@ -1,0 +1,21 @@
+def band_filter_process(input):
+    
+    b_HPF_1,a_HPF_1 = signal.butter(4, 0.046875, btype='highpass') #4阶，6Hz ， 6/(sampling_rate/2) 和iirfilter效果一样
+    b_LPF_1,a_LPF_1 = signal.butter(4, 0.125, btype='lowpass') #4阶，16Hz ，16/(sampling_rate/2) 和iirfilter效果一样
+    
+    b_HPF_2,a_HPF_2 = signal.butter(4, 0.125, btype='highpass') #4阶，16Hz ， 16/(sampling_rate/2) 和iirfilter效果一样
+    b_LPF_2,a_LPF_2 = signal.butter(4, 0.25, btype='lowpass') #4阶，32Hz ，32/(sampling_rate/2) 和iirfilter效果一样
+    
+    b_HPF_3,a_HPF_3 = signal.butter(4, 0.25, btype='highpass') #4阶，32Hz ， 32/(sampling_rate/2) 和iirfilter效果一样
+    b_LPF_3,a_LPF_3 = signal.butter(4, 0.5, btype='lowpass') #4阶，64Hz ，64/(sampling_rate/2) 和iirfilter效果一样
+    
+    data_HF_1 = signal.filtfilt(b_HPF_1, a_HPF_1, input) #零相位滤波，滤两次，反向多滤了一次
+    band1 = signal.filtfilt(b_LPF_1, a_LPF_1, data_HF_1) #6-16
+    
+    data_HF_2 = signal.filtfilt(b_HPF_2, a_HPF_2, input) #零相位滤波，滤两次，反向多滤了一次
+    band2 = signal.filtfilt(b_LPF_2, a_LPF_2, data_HF_2) #16-32
+    
+    data_HF_3 = signal.filtfilt(b_HPF_3, a_HPF_3, input) #零相位滤波，滤两次，反向多滤了一次
+    band3 = signal.filtfilt(b_LPF_3, a_LPF_3, data_HF_3) #32-64
+    
+    return band1,band2,band3
