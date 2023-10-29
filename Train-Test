@@ -1,0 +1,65 @@
+def main():
+    all_trailers = ['s1', 's2', 's3', 's4', 's5',
+                    's6', 's7', 's8', 's9', 's10']
+
+    acc_avg_total = [0] * 10
+    num_folds = 10
+
+    for i in range(len(all_trailers)):
+        print('.............')
+        print('Test trailer is', all_trailers[i])
+        train_datas_1, train_datas_2, train_datas_3, train_labels = data_batch_FFT_one_tester_abs_UD(all_trailers[i], time_length=1)
+        kf = KFold(n_splits=num_folds, shuffle=True)
+        kf.get_n_splits(train_datas_1)
+
+        label_binarizer = LabelBinarizer()
+        train_labels_one_hot = label_binarizer.fit_transform(train_labels)
+
+        acc_per = [0] * 10
+        per_index = 0
+
+        for train_index, test_index in kf.split(train_datas_1):
+            x_tr1, x_tr2, x_tr3, x_ts1, x_ts2, x_ts3 = train_datas_1[train_index], train_datas_2[train_index], train_datas_3[train_index], train_datas_1[test_index], train_datas_2[test_index], train_datas_3[test_index]
+            # Convert input data to the desired data type (e.g., float)
+            x_tr1 = torch.from_numpy(x_tr1).float()
+            x_tr2 = torch.from_numpy(x_tr2).float()
+            x_tr3 = torch.from_numpy(x_tr3).float()
+
+
+            label_tr, label_ts = train_labels_one_hot[train_index], train_labels_one_hot[test_index]
+
+            EEG_model = CNNModel(input_shape=(1, 10, 201), decay=0.001)
+            optimizer = optim.SGD(EEG_model.parameters(), lr=0.001, weight_decay=0, momentum=0.9, nesterov=False)
+            criterion = nn.CrossEntropyLoss()
+
+            for ix in range(epoch):
+                optimizer.zero_grad()
+                output = EEG_model(x_tr1, x_tr2, x_tr3)
+                loss = criterion(output, torch.argmax(label_tr, dim=1))
+                loss.backward()
+                optimizer.step()
+
+            with torch.no_grad():
+                output = EEG_model(x_tr1, x_tr2, x_tr3)
+
+                _, predicted = torch.max(output, 1)
+                total = label_ts.size(0)
+                correct = (predicted == torch.argmax(label_ts, dim=1)).sum().item()
+                test_acc = correct / total
+                print(f"{all_trailers[i]} Fold {per_index + 1} Accuracy: {test_acc:.4f}, Total test samples: {len(label_ts)}")
+                acc_per[per_index] = test_acc
+                per_index += 1
+
+        print(f"{all_trailers[i]} Accuracies: {acc_per}")
+        avg_accuracy = np.mean(acc_per)
+        print(f"{all_trailers[i]} Average Accuracy: {avg_accuracy:.4f}")
+        acc_avg_total[i] = avg_accuracy
+
+    print('.............')
+    print('Total Accuracies: ', acc_avg_total)
+    total_avg_accuracy = np.mean(acc_avg_total)
+    total_std = np.std(acc_avg_total)
+    print(f'Total Average Accuracy: {total_avg_accuracy:.4f}, STD: {total_std:.4f}')
+
+if __name__ == "__main__":
+    main()
