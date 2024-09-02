@@ -1,4 +1,5 @@
-# SSVEP
+#  SSVEP Signal Classification in BCIs with FBCNN
+
 SSVEP_FBCNN_12class is a deep learning model designed for classifying 12 different SSVEP signals, which are a type of brain signal generated in response to flickering light at specific frequencies. This model is based on a convolutional neural network (CNN) architecture known as the filter bank CNN (FBCNN). Here's a breakdown of the key components and their roles:
 
 SSVEP Signals: Steady-state visually evoked potentials (SSVEPs) are brain signals elicited when a person views a flickering light at a particular frequency. The frequency of the SSVEP signal corresponds to the flickering frequency of the light source.
